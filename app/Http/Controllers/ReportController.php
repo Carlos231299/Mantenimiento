@@ -113,16 +113,55 @@ class ReportController extends Controller
 
     public function print(Request $request)
     {
-        // Misma lógica pero orientada a vista de impresión
-        // Podríamos filtrar por fecha si el request lo pide
         $date = Carbon::now();
+        $rooms = Room::withCount('equipments')->get();
         
+        // 1. Métricas Globales
+        $totalRooms = Room::count();
+        $totalEquipment = Equipment::count();
+        $operationalEquipment = Equipment::where('status', 'operational')->count();
+        $faultyEquipment = Equipment::whereIn('status', ['faulty', 'maintenance'])->count();
+        $pendingTasksCount = Task::where('status', 'pending')->count();
+        $healthIndex = ($totalEquipment > 0) ? round(($operationalEquipment / $totalEquipment) * 100) : 0;
+
+        // 2. Prioridades
+        $priorityStats = Task::where('status', 'pending')
+            ->selectRaw('priority, count(*) as count')
+            ->groupBy('priority')
+            ->pluck('count', 'priority')->toArray();
+
+        // 3. Salud por Sala
+        $roomHealthRanking = [];
+        foreach ($rooms as $room) {
+            $total = $room->equipments_count;
+            $op = Equipment::where('room_id', $room->id)->where('status', 'operational')->count();
+            $roomHealthRanking[] = [
+                'name' => $room->name,
+                'health' => ($total > 0) ? round(($op / $total) * 100) : 0,
+                'total' => $total,
+                'faulty' => $total - $op
+            ];
+        }
+        usort($roomHealthRanking, fn($a, $b) => $a['health'] <=> $b['health']);
+
+        // 4. Mantenimientos (Último mes)
         $completedTasks = Task::where('status', 'completed')
+             ->where('completed_at', '>=', Carbon::now()->subMonth())
              ->with(['equipment.room', 'technician'])
              ->orderByDesc('completed_at')
              ->get();
 
-        return view('reports.print', compact('completedTasks', 'date'));
+        return view('reports.print', compact(
+            'date', 
+            'totalRooms',
+            'totalEquipment',
+            'faultyEquipment',
+            'pendingTasksCount',
+            'healthIndex',
+            'priorityStats',
+            'roomHealthRanking',
+            'completedTasks'
+        ));
     }
 
     public function preliminary(Request $request)

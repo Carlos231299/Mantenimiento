@@ -38,7 +38,6 @@
                         <option value="operational" {{ (old('status', $equipment->status ?? '') == 'operational') ? 'selected' : '' }}>Funciona Correctamente</option>
                         <option value="maintenance" {{ (old('status', $equipment->status ?? '') == 'maintenance') ? 'selected' : '' }}>Mantenimiento Preventivo</option>
                         <option value="faulty" {{ (old('status', $equipment->status ?? '') == 'faulty') ? 'selected' : '' }}>No Funciona</option>
-                        
                     </select>
                 </div>
                 

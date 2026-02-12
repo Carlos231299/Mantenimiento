@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="350" height="64" viewBox="0 0 350 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="16" fill="#4F46E5"/>
+  <text x="32" y="47" font-family="sans-serif" font-weight="bold" font-size="42" fill="white" text-anchor="middle">M</text>
+  <text x="80" y="43" font-family="sans-serif" font-weight="bold" font-size="32" fill="#1F2937">Mant</text>
+  <text x="165" y="43" font-family="sans-serif" font-weight="bold" font-size="32" fill="#4F46E5">System</text>
+</svg>

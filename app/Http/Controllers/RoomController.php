@@ -71,7 +71,7 @@ class RoomController extends Controller
                 for ($col = 1; $col <= 3; $col++) {
                     if ($studentPcsCreated >= $totalCapacity) break 2;
 
-                    $code = "{$roomInitials}-{$room->id}-R{$row}-C{$col}";
+                    $code = "{$roomInitials}-{$room->id}-D{$row}-C{$col}";
                     $posIndex = ($row - 1) * 6 + $col; // 1, 2, 3...
                     
                     \App\Models\Equipment::create([
@@ -91,7 +91,7 @@ class RoomController extends Controller
                 for ($col = 1; $col <= 3; $col++) {
                     if ($studentPcsCreated >= $totalCapacity) break 2; 
 
-                    $code = "{$roomInitials}-{$room->id}-L{$row}-C{$col}";
+                    $code = "{$roomInitials}-{$room->id}-I{$row}-C{$col}";
                     $posIndex = ($row - 1) * 6 + ($col + 3); // 4, 5, 6...
                     
                     \App\Models\Equipment::create([

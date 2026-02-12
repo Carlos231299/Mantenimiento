@@ -27,11 +27,6 @@
                     <input type="text" name="inventory_code" id="inventory_code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 border px-3" placeholder="PC-01-001" value="{{ old('inventory_code', $equipment->inventory_code ?? '') }}">
                 </div>
 
-                <div class="col-span-2 sm:col-span-1">
-                    <label for="ip_address" class="block text-sm font-medium text-gray-700">Dirección IP Encontrada</label>
-                    <input type="text" name="ip_address" id="ip_address" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 border px-3" placeholder="192.168.1.10" value="{{ old('ip_address', $equipment->ip_address ?? '') }}">
-                </div>
-
                 <div class="col-span-2">
                     <label for="specifications" class="block text-sm font-medium text-gray-700">Especificaciones</label>
                     <textarea name="specifications" id="specifications" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-3" placeholder="Intel Core i5, 16GB RAM, 512GB SSD...">{{ old('specifications', $equipment->specifications ?? '') }}</textarea>

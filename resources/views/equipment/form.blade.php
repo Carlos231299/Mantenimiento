@@ -22,7 +22,7 @@
             @endif
 
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div class="col-span-2 sm:col-span-1">
+                <div class="col-span-2 sm:col-span-2">
                     <label for="inventory_code" class="block text-sm font-medium text-gray-700">Serial</label>
                     <input type="text" name="inventory_code" id="inventory_code" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 border px-3" placeholder="PC-01-001" value="{{ old('inventory_code', $equipment->inventory_code ?? '') }}">
                 </div>
@@ -33,10 +33,12 @@
                 </div>
 
                 <div class="col-span-2 sm:col-span-1">
-                    <label for="status" class="block text-sm font-medium text-gray-700">Estado Operativo Encontrado</label>
+                    <label for="status" class="block text-sm font-medium text-gray-700">Estado Operativo</label>
                     <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 border px-3">
-                        <option value="maintenance" {{ (old('status', $equipment->status ?? '') == 'maintenance') ? 'selected' : '' }}>Funcional - Mantenimiento Preventivo</option>
+                        <option value="operational" {{ (old('status', $equipment->status ?? '') == 'operational') ? 'selected' : '' }}>Funciona Correctamente</option>
+                        <option value="maintenance" {{ (old('status', $equipment->status ?? '') == 'maintenance') ? 'selected' : '' }}>Mantenimiento Preventivo</option>
                         <option value="faulty" {{ (old('status', $equipment->status ?? '') == 'faulty') ? 'selected' : '' }}>No Funciona</option>
+                        
                     </select>
                 </div>
                 

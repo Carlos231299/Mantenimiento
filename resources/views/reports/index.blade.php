@@ -54,6 +54,39 @@
         </div>
     </div>
 
+    <!-- Prepare Print Report Form -->
+    <div class="bg-white rounded-xl shadow-sm border-2 border-indigo-100 overflow-hidden">
+        <div class="p-4 bg-indigo-50 border-b border-indigo-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 rounded-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                </div>
+                <h3 class="text-sm font-bold text-indigo-900 uppercase tracking-tight">Preparar Reporte de Gestión Premium</h3>
+            </div>
+            <span class="text-[10px] font-bold text-indigo-400 uppercase">Incluye Gráficas y Resumen Ejecutivo</span>
+        </div>
+        <div class="p-6">
+            <form action="{{ route('reports.print') }}" method="GET" target="_blank" class="space-y-4">
+                <div>
+                    <label for="recommendations" class="block text-xs font-bold text-gray-500 uppercase mb-2">Recomendaciones y Observaciones Técnicas</label>
+                    <textarea 
+                        name="recommendations" 
+                        id="recommendations" 
+                        rows="3" 
+                        class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm p-4 bg-gray-50 shadow-inner"
+                        placeholder="Escribe aquí las recomendaciones que aparecerán en el informe impreso... (Ej. Se recomienda reemplazo de baterías en Sala A)"
+                    ></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-xl font-black text-white text-xs uppercase tracking-widest hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-lg shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Generar Informe de Impresión
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Room Health Ranking (Only visible when no room filter is active) -->
         @if(!$roomId)

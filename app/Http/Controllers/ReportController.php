@@ -115,22 +115,42 @@ class ReportController extends Controller
     {
         $date = Carbon::now();
         $rooms = Room::withCount('equipments')->get();
+        $recommendations = $request->input('recommendations');
         
         // 1. Métricas Globales
         $totalRooms = Room::count();
         $totalEquipment = Equipment::count();
         $operationalEquipment = Equipment::where('status', 'operational')->count();
-        $faultyEquipment = Equipment::whereIn('status', ['faulty', 'maintenance'])->count();
+        $faultyEquipmentCount = Equipment::whereIn('status', ['faulty', 'maintenance'])->count();
         $pendingTasksCount = Task::where('status', 'pending')->count();
         $healthIndex = ($totalEquipment > 0) ? round(($operationalEquipment / $totalEquipment) * 100) : 0;
 
-        // 2. Prioridades
+        // 2. Equipos con Falla (Prioridad Alta para correctivo)
+        $faultyEquipment = Equipment::whereIn('status', ['faulty', 'maintenance'])
+            ->with('room')
+            ->get();
+
+        // 3. Resumen Narrativo Automático
+        $summary = "Durante el último periodo, se ha mantenido un parque tecnológico de {$totalEquipment} equipos distribuidos en {$totalRooms} salas. ";
+        $summary .= "A la fecha, el índice de salud global se sitúa en un {$healthIndex}%, con {$operationalEquipment} equipos operativos. ";
+        
+        if ($faultyEquipmentCount > 0) {
+            $summary .= "Se han identificado {$faultyEquipmentCount} equipos con fallas críticas o en estado de mantenimiento, los cuales han sido categorizados como prioridad alta para futuras intervenciones correctivas. ";
+        } else {
+            $summary .= "No se reportan fallas críticas activas en las salas inspeccionadas. ";
+        }
+
+        if ($pendingTasksCount > 0) {
+            $summary .= "Actualmente existen {$pendingTasksCount} tareas de mantenimiento pendientes por ejecutar.";
+        }
+
+        // 4. Prioridades
         $priorityStats = Task::where('status', 'pending')
             ->selectRaw('priority, count(*) as count')
             ->groupBy('priority')
             ->pluck('count', 'priority')->toArray();
 
-        // 3. Salud por Sala
+        // 5. Salud por Sala
         $roomHealthRanking = [];
         foreach ($rooms as $room) {
             $total = $room->equipments_count;
@@ -144,7 +164,7 @@ class ReportController extends Controller
         }
         usort($roomHealthRanking, fn($a, $b) => $a['health'] <=> $b['health']);
 
-        // 4. Mantenimientos (Último mes)
+        // 6. Mantenimientos (Último mes)
         $completedTasks = Task::where('status', 'completed')
              ->where('completed_at', '>=', Carbon::now()->subMonth())
              ->with(['equipment.room', 'technician'])
@@ -155,12 +175,15 @@ class ReportController extends Controller
             'date', 
             'totalRooms',
             'totalEquipment',
-            'faultyEquipment',
+            'faultyEquipmentCount',
             'pendingTasksCount',
             'healthIndex',
             'priorityStats',
             'roomHealthRanking',
-            'completedTasks'
+            'completedTasks',
+            'summary',
+            'recommendations',
+            'faultyEquipment'
         ));
     }
 

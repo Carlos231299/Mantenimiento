@@ -129,7 +129,7 @@
                                         switch($pc->status) {
                                             case 'operational': $borderClass = 'border-green-400 bg-green-50'; break;
                                             case 'maintenance': $borderClass = 'border-amber-400 bg-amber-50'; break;
-                                            case 'faulty': $borderClass = 'border-red-400 bg-red-50'; break;
+                                            case 'faulty': $borderClass = 'border-red-600 bg-red-200'; break;
                                         }
                                     }
                                 @endphp
@@ -217,7 +217,7 @@
                                         switch($pc->status) {
                                             case 'operational': $borderClass = 'border-green-400 bg-green-50'; break;
                                             case 'maintenance': $borderClass = 'border-amber-400 bg-amber-50'; break;
-                                            case 'faulty': $borderClass = 'border-red-400 bg-red-50'; break;
+                                            case 'faulty': $borderClass = 'border-red-600 bg-red-200'; break;
                                         }
                                     }
                                 @endphp

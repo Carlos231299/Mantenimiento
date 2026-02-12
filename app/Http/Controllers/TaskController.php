@@ -144,9 +144,10 @@ class TaskController extends Controller
             'is_urgent' => $request->has('is_urgent'), 
         ]);
 
-        // Lógica de Negocio: Al completar tarea, equipo -> operativo
+        // Lógica de Negocio: Al completar tarea, actualizar estado del equipo según lo indicado
         if ($task->equipment) {
-            $task->equipment->update(['status' => 'operational']);
+            $finalStatus = $request->input('final_status', 'operational');
+            $task->equipment->update(['status' => $finalStatus]);
         }
 
         return redirect()->route('tasks.index');

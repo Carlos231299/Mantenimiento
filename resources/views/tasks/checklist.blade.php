@@ -232,10 +232,37 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex items-center pt-4 border-t border-gray-200">
+        <!-- Section: Final Verification -->
+        <div class="p-6 bg-indigo-50 border-b border-indigo-100">
+            <h4 class="text-lg font-bold text-indigo-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Verificación Final de Operatividad
+            </h4>
+            
+            <p class="text-sm text-indigo-700 mb-4 font-medium">Después de las pruebas realizadas, ¿cuál es el estado final del equipo?</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <label class="relative flex flex-col p-4 bg-white rounded-xl border-2 cursor-pointer transition-all hover:shadow-md has-[:checked]:border-green-500 has-[:checked]:bg-green-50 group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-black text-gray-700 group-has-[:checked]:text-green-700">OPERATIVO</span>
+                        <input type="radio" name="final_status" value="operational" class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300" required {{ $task->equipment->status == 'operational' ? 'checked' : '' }}>
+                    </div>
+                    <p class="text-[10px] text-gray-400 group-has-[:checked]:text-green-600">El equipo enciende y funciona correctamente.</p>
+                </label>
+
+                <label class="relative flex flex-col p-4 bg-white rounded-xl border-2 cursor-pointer transition-all hover:shadow-md has-[:checked]:border-red-500 has-[:checked]:bg-red-50 group">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-black text-gray-700 group-has-[:checked]:text-red-700">CON FALLA</span>
+                        <input type="radio" name="final_status" value="faulty" class="h-5 w-5 text-red-600 focus:ring-red-500 border-gray-300" required {{ $task->equipment->status == 'faulty' ? 'checked' : '' }}>
+                    </div>
+                    <p class="text-[10px] text-gray-400 group-has-[:checked]:text-red-600">Persisten problemas o no enciende.</p>
+                </label>
+            </div>
+
+            <div class="mt-6 flex items-center pt-4 border-t border-indigo-200">
                 <input type="checkbox" id="urgent" name="is_urgent" class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" {{ $task->is_urgent ? 'checked' : '' }}>
-                <label for="urgent" class="ml-2 block text-sm text-red-600 font-medium">
-                    Marcar para reparación urgente (Requiere repuestos)
+                <label for="urgent" class="ml-2 block text-xs text-red-700 font-bold uppercase tracking-tight">
+                    Requiere reparación inmediata / Repuestos
                 </label>
             </div>
         </div>

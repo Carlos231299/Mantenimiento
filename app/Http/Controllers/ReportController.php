@@ -13,15 +13,23 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $roomId = $request->input('room_id');
-        $rooms = Room::all();
+        $rooms = Room::withCount('equipments')->get();
 
         // 1. Resumen General
-        $totalRooms = Room::count(); // Total global, irrelevante filtrar
+        $totalRooms = Room::count(); 
         
         // Total Equipment (Filtrado)
         $eqQuery = Equipment::query();
         if ($roomId) $eqQuery->where('room_id', $roomId);
         $totalEquipment = $eqQuery->count();
+
+        // Operativo Equipment (Para Índice de Salud)
+        $operationalQuery = Equipment::where('status', 'operational');
+        if ($roomId) $operationalQuery->where('room_id', $roomId);
+        $operationalEquipment = $operationalQuery->count();
+
+        // Índice de Salud (Porcentaje)
+        $healthIndex = ($totalEquipment > 0) ? round(($operationalEquipment / $totalEquipment) * 100) : 0;
 
         // Faulty Equipment (Filtrado)
         $faultyQuery = Equipment::whereIn('status', ['faulty', 'maintenance']);
@@ -37,8 +45,36 @@ class ReportController extends Controller
         }
         $pendingTasks = $taskQuery->count();
 
-        // 2. Equipos con más fallas (Top 5)
-        // Se asume que cada tarea representa una falla/mantenimiento
+        // 2. Distribución de Prioridades
+        $priorityDistribution = Task::where('status', 'pending')
+            ->selectRaw('priority, count(*) as count')
+            ->groupBy('priority');
+        
+        if ($roomId) {
+            $priorityDistribution->whereHas('equipment', function($q) use ($roomId) {
+                $q->where('room_id', $roomId);
+            });
+        }
+        $priorityStats = $priorityDistribution->pluck('count', 'priority')->toArray();
+
+        // 3. Ranking de Salud por Sala (Solo si no hay filtro de sala específico)
+        $roomHealthRanking = [];
+        if (!$roomId) {
+            foreach ($rooms as $room) {
+                $total = $room->equipments_count;
+                $op = Equipment::where('room_id', $room->id)->where('status', 'operational')->count();
+                $roomHealthRanking[] = [
+                    'name' => $room->name,
+                    'health' => ($total > 0) ? round(($op / $total) * 100) : 0,
+                    'total' => $total,
+                    'faulty' => $total - $op
+                ];
+            }
+            // Ordenar por salud ascendente (salas con más problemas primero)
+            usort($roomHealthRanking, fn($a, $b) => $a['health'] <=> $b['health']);
+        }
+
+        // 4. Equipos con más fallas (Top 5)
         $topFaultyQuery = Equipment::withCount('tasks');
         if ($roomId) $topFaultyQuery->where('room_id', $roomId);
         
@@ -46,7 +82,7 @@ class ReportController extends Controller
             ->take(5)
             ->get();
 
-        // 3. Tareas completadas recientemente (Último mes)
+        // 5. Tareas completadas recientemente
         $completedQuery = Task::where('status', 'completed')
             ->where('completed_at', '>=', Carbon::now()->subMonth())
             ->with(['equipment.room', 'technician']);
@@ -65,6 +101,9 @@ class ReportController extends Controller
             'totalEquipment', 
             'faultyEquipment', 
             'pendingTasks',
+            'healthIndex',
+            'priorityStats',
+            'roomHealthRanking',
             'topFaultyEquipment',
             'completedTasks',
             'rooms',

@@ -3,6 +3,7 @@
 @section('header', 'Distribución de Sala: ' . $room->name)
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="space-y-6">
     <!-- Header / Stats -->
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -133,7 +134,7 @@
                                         }
                                     }
                                 @endphp
-                                <div class="group relative flex flex-col items-center">
+                                <div class="group relative flex flex-col items-center drop-slot" data-index="{{ $pcNum }}">
                                     @if($pc)
                                     @php
                                         $activeTask = $pc->activeTask;
@@ -146,50 +147,41 @@
                                             $actionUrl = route('tasks.show', $lastTask->id);
                                         }
                                     @endphp
-                                    <div class="relative w-20 h-20">
-                                        <a href="{{ $actionUrl }}" class="block w-full h-full rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2 cursor-pointer hover:scale-105 transition-transform hover:ring-2 hover:ring-indigo-400" title="{{ $pc->inventory_code }}">
-                                            <img src="{{ asset('img/pc_icon.png') }}" alt="PC" class="w-full h-full object-contain opacity-90">
+                                    <div class="relative w-20 h-20 draggable-pc" draggable="true" data-id="{{ $pc->id }}">
+                                        <div class="block w-full h-full rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2 cursor-move hover:scale-105 transition-transform hover:ring-2 hover:ring-indigo-400" title="{{ $pc->inventory_code }}">
+                                            <img src="{{ asset('img/pc_icon.png') }}" alt="PC" class="w-full h-full object-contain opacity-90 pointer-events-none">
                                             
-                                            <!-- Overlay Text specific for this context -->
-                                            @if($activeTask)
-                                                <div class="absolute inset-0 flex items-center justify-center bg-amber-500/80 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">CONTINUAR</div>
-                                            @elseif($lastTask)
-                                                <div class="absolute inset-0 flex items-center justify-center bg-indigo-600/80 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">REPORTE</div>
-                                            @else
-                                                <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">EDITAR</div>
-                                            @endif
-                                        </a>
+                                            <!-- Action Overlay (Only click, not drag) -->
+                                            <a href="{{ $actionUrl }}" class="absolute inset-0 flex items-center justify-center bg-black/5 text-transparent hover:bg-black/40 hover:text-white rounded-xl font-bold text-[10px] transition-all flex flex-col items-center justify-center gap-1">
+                                                <span>{{ $activeTask ? 'CONTINUAR' : ($lastTask ? 'REPORTE' : 'EDITAR') }}</span>
+                                            </a>
+                                        </div>
 
                                         @if($activeTask)
-                                            <div class="absolute -top-3 -left-2 bg-amber-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="En Mantenimiento">
+                                            <div class="absolute -top-3 -left-2 bg-amber-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="En Mantenimiento">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                             </div>
                                         @elseif($pc->status == 'faulty')
-                                            <div class="absolute -top-3 -left-2 bg-red-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Falla Reportada">
+                                            <div class="absolute -top-3 -left-2 bg-red-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Falla Reportada">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                             </div>
                                         @elseif($lastTask)
-                                            <div class="absolute -top-3 -left-2 bg-green-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Mantenimiento Completado">
+                                            <div class="absolute -top-3 -left-2 bg-green-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Mantenimiento Completado">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                             </div>
                                         @else
-                                             <div class="absolute -top-3 -left-2 bg-gray-400 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Sin Historial">
+                                             <div class="absolute -top-3 -left-2 bg-gray-400 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Sin Historial">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                             </div>
                                         @endif
-
-                                        <!-- Corner Edit Pencil -->
-                                        <a href="{{ route('equipment.edit', $pc->id) }}" class="absolute -top-2 -right-2 p-1 bg-white rounded-full text-gray-400 hover:text-indigo-600 shadow-md border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-20" title="Editar Propiedades">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                        </a>
                                     </div>
                                     @else
-                                    <div class="w-20 h-20 rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2">
-                                        <span class="text-xs text-gray-300 font-bold">VACÍO</span>
+                                    <div class="w-20 h-20 rounded-xl shadow-sm border-2 border-dashed border-gray-200 flex items-center justify-center p-2 opacity-50">
+                                        <span class="text-[10px] text-gray-300 font-bold uppercase">Vacío</span>
                                     </div>
                                     @endif
-                                    <span class="mt-2 text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded shadow-sm">
-                                        {{ $pc ? $pc->inventory_code : 'PC-' . str_pad($pcNum, 2, '0', STR_PAD_LEFT) }}
+                                    <span class="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">
+                                        {{ $pc ? $pc->inventory_code : 'SLOT-' . str_pad($pcNum, 2, '0', STR_PAD_LEFT) }}
                                     </span>
                                 </div>
                             @endfor
@@ -221,7 +213,7 @@
                                         }
                                     }
                                 @endphp
-                                <div class="group relative flex flex-col items-center">
+                                <div class="group relative flex flex-col items-center drop-slot" data-index="{{ $pcNum }}">
                                     @if($pc)
                                     @php
                                         $activeTask = $pc->activeTask;
@@ -234,50 +226,41 @@
                                             $actionUrl = route('tasks.show', $lastTask->id);
                                         }
                                     @endphp
-                                    <div class="relative w-20 h-20">
-                                        <a href="{{ $actionUrl }}" class="block w-full h-full rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2 cursor-pointer hover:scale-105 transition-transform hover:ring-2 hover:ring-indigo-400" title="{{ $pc->inventory_code }}">
-                                            <img src="{{ asset('img/pc_icon.png') }}" alt="PC" class="w-full h-full object-contain opacity-90">
+                                    <div class="relative w-20 h-20 draggable-pc" draggable="true" data-id="{{ $pc->id }}">
+                                        <div class="block w-full h-full rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2 cursor-move hover:scale-105 transition-transform hover:ring-2 hover:ring-indigo-400" title="{{ $pc->inventory_code }}">
+                                            <img src="{{ asset('img/pc_icon.png') }}" alt="PC" class="w-full h-full object-contain opacity-90 pointer-events-none">
                                             
-                                            <!-- Overlay Text specific for this context -->
-                                            @if($activeTask)
-                                                <div class="absolute inset-0 flex items-center justify-center bg-amber-500/80 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">CONTINUAR</div>
-                                            @elseif($lastTask)
-                                                <div class="absolute inset-0 flex items-center justify-center bg-indigo-600/80 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">REPORTE</div>
-                                            @else
-                                                <div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-xl font-bold text-[10px] opacity-0 hover:opacity-100 transition-opacity">EDITAR</div>
-                                            @endif
-                                        </a>
+                                            <!-- Action Overlay -->
+                                            <a href="{{ $actionUrl }}" class="absolute inset-0 flex items-center justify-center bg-black/5 text-transparent hover:bg-black/40 hover:text-white rounded-xl font-bold text-[10px] transition-all flex flex-col items-center justify-center gap-1">
+                                                <span>{{ $activeTask ? 'CONTINUAR' : ($lastTask ? 'REPORTE' : 'EDITAR') }}</span>
+                                            </a>
+                                        </div>
 
                                         @if($activeTask)
-                                            <div class="absolute -top-3 -left-2 bg-amber-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="En Mantenimiento">
+                                            <div class="absolute -top-3 -left-2 bg-amber-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="En Mantenimiento">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                             </div>
                                         @elseif($pc->status == 'faulty')
-                                            <div class="absolute -top-3 -left-2 bg-red-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Falla Reportada">
+                                            <div class="absolute -top-3 -left-2 bg-red-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Falla Reportada">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                             </div>
                                         @elseif($lastTask)
-                                            <div class="absolute -top-3 -left-2 bg-green-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Mantenimiento Completado">
+                                            <div class="absolute -top-3 -left-2 bg-green-500 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Mantenimiento Completado">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                             </div>
                                         @else
-                                             <div class="absolute -top-3 -left-2 bg-gray-400 text-white rounded-full p-1 shadow-md border-2 border-white z-20" title="Sin Historial">
+                                             <div class="absolute -top-3 -left-2 bg-gray-400 text-white rounded-full p-1 shadow-md border-2 border-white z-20 pointer-events-none" title="Sin Historial">
                                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                             </div>
                                         @endif
-
-                                        <!-- Corner Edit Pencil -->
-                                        <a href="{{ route('equipment.edit', $pc->id) }}" class="absolute -top-2 -right-2 p-1 bg-white rounded-full text-gray-400 hover:text-indigo-600 shadow-md border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-20" title="Editar Propiedades">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                        </a>
                                     </div>
                                     @else
-                                    <div class="w-20 h-20 rounded-xl shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2">
-                                        <span class="text-xs text-gray-300 font-bold">VACÍO</span>
+                                    <div class="w-20 h-20 rounded-xl shadow-sm border-2 border-dashed border-gray-200 flex items-center justify-center p-2 opacity-50">
+                                        <span class="text-[10px] text-gray-300 font-bold uppercase">Vacío</span>
                                     </div>
                                     @endif
-                                    <span class="mt-2 text-xs font-bold text-slate-600 bg-white px-2 py-0.5 rounded shadow-sm">
-                                         {{ $pc ? $pc->inventory_code : 'PC-' . str_pad($pcNum, 2, '0', STR_PAD_LEFT) }}
+                                    <span class="mt-2 text-[10px] font-black text-slate-400 uppercase tracking-tighter bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">
+                                         {{ $pc ? $pc->inventory_code : 'SLOT-' . str_pad($pcNum, 2, '0', STR_PAD_LEFT) }}
                                     </span>
                                 </div>
                             @endfor
@@ -289,4 +272,80 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const draggables = document.querySelectorAll('.draggable-pc');
+    const slots = document.querySelectorAll('.drop-slot');
+    let draggedId = null;
+
+    draggables.forEach(pc => {
+        pc.addEventListener('dragstart', (e) => {
+            draggedId = pc.dataset.id;
+            pc.classList.add('opacity-40');
+            pc.classList.add('scale-90');
+            e.dataTransfer.setData('text/plain', draggedId);
+        });
+
+        pc.addEventListener('dragend', () => {
+            pc.classList.remove('opacity-40');
+            pc.classList.remove('scale-90');
+        });
+    });
+
+    slots.forEach(slot => {
+        slot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            slot.classList.add('bg-indigo-50');
+            slot.classList.add('scale-105');
+        });
+
+        slot.addEventListener('dragleave', () => {
+            slot.classList.remove('bg-indigo-50');
+            slot.classList.remove('scale-105');
+        });
+
+        slot.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            slot.classList.remove('bg-indigo-50');
+            slot.classList.remove('scale-105');
+
+            const equipmentId = e.dataTransfer.getData('text/plain');
+            const newPosition = slot.dataset.index;
+
+            if (!equipmentId || !newPosition) return;
+
+            try {
+                const response = await fetch(`{{ route('rooms.reorder', $room->id) }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        equipment_id: equipmentId,
+                        new_position: newPosition
+                    })
+                });
+
+                if (response.ok) {
+                    window.location.reload(); // Recargar para ver el cambio reflejado
+                } else {
+                    alert('Error al mover el equipo');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ocurrió un error al procesar el cambio');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+    .drop-slot { transition: all 0.2s ease; cursor: default; }
+    .draggable-pc { transition: all 0.2s ease; }
+    .drop-slot.bg-indigo-50 { border-radius: 1rem; }
+    .writing-vertical-lr { writing-mode: vertical-lr; }
+</style>
 @endsection

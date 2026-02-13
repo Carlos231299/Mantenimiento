@@ -63,6 +63,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/rooms/create', [RoomController::class, 'create'])->name('rooms.create');
         Route::post('/rooms', [RoomController::class, 'store'])->name('rooms.store');
         Route::get('/rooms/{id}', [RoomController::class, 'show'])->name('rooms.show');
+        Route::post('/rooms/{id}/reorder', [RoomController::class, 'reorderEquipment'])->name('rooms.reorder');
         Route::delete('/rooms/{id}', [RoomController::class, 'destroy'])->name('rooms.destroy');
 
         // Equipos

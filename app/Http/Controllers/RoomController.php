@@ -122,4 +122,29 @@ class RoomController extends Controller
 
         return redirect()->route('rooms.index')->with('success', 'Sala eliminada correctamente.');
     }
+
+    public function reorderEquipment(Request $request, $id)
+    {
+        $request->validate([
+            'equipment_id' => 'required|exists:equipment,id',
+            'new_position' => 'required|integer',
+        ]);
+
+        $room = Room::findOrFail($id);
+        $equipment = \App\Models\Equipment::where('room_id', $room->id)->findOrFail($request->equipment_id);
+        $newPosition = $request->new_position;
+
+        // Si ya hay un equipo en esa posición, los intercambiamos
+        $existingEquipment = \App\Models\Equipment::where('room_id', $room->id)
+            ->where('position_index', $newPosition)
+            ->first();
+
+        if ($existingEquipment) {
+            $existingEquipment->update(['position_index' => $equipment->position_index]);
+        }
+
+        $equipment->update(['position_index' => $newPosition]);
+
+        return response()->json(['success' => true]);
+    }
 }

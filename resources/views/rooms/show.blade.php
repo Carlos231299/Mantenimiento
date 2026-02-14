@@ -280,6 +280,61 @@
 
             </div>
         </div>
+    <!-- BANDEJA DE EQUIPOS NO ASIGNADOS -->
+    <div class="mt-12 bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                Bandeja de Equipos (No Asignados)
+            </h4>
+            <span class="text-[10px] text-gray-400 italic">Arrastra equipos aquí para quitarlos de la cuadrícula</span>
+        </div>
+        
+        <div id="tray-dropzone" class="min-h-[120px] rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-wrap gap-4 p-4 transition-colors drop-slot" data-index="0">
+            @php
+                $unassigned = $room->equipments->where('position_index', 0)->where('is_teacher_pc', false);
+            @endphp
+            
+            @forelse($unassigned as $pc)
+                @php
+                    $activeTask = $pc->activeTask;
+                    $lastTask = $pc->lastCompletedTask;
+                    $actionUrl = route('equipment.edit', $pc->id);
+                    if ($activeTask) {
+                        $actionUrl = route('tasks.checklist', $activeTask->id);
+                    } elseif ($lastTask) {
+                        $actionUrl = route('tasks.show', $lastTask->id);
+                    }
+
+                    $borderClass = 'border-gray-300 bg-white';
+                    switch($pc->status) {
+                        case 'operational': $borderClass = 'border-green-400 bg-green-50'; break;
+                        case 'maintenance': $borderClass = 'border-amber-400 bg-amber-50'; break;
+                        case 'faulty': $borderClass = 'border-red-600 bg-red-200'; break;
+                    }
+                @endphp
+                <div class="group relative flex flex-col items-center">
+                    <div class="relative w-16 h-16 draggable-pc" draggable="true" data-id="{{ $pc->id }}">
+                        <div class="block w-full h-full rounded-lg shadow-sm border-2 {{ $borderClass }} flex items-center justify-center p-2 cursor-move hover:scale-105 transition-transform" title="{{ $pc->inventory_code }}">
+                            <img src="{{ asset('img/pc_icon.png') }}" alt="PC" class="w-full h-full object-contain opacity-70 pointer-events-none">
+                            <a href="{{ $actionUrl }}" class="absolute inset-0 flex items-center justify-center bg-black/5 text-transparent hover:bg-black/40 hover:text-white rounded-lg font-bold text-[8px] transition-all">
+                                VER
+                            </a>
+                        </div>
+                        
+                        <!-- Mini Lápiz -->
+                        <a href="{{ route('equipment.edit', $pc->id) }}" class="absolute -top-1 -right-1 p-0.5 bg-white rounded-full text-gray-400 hover:text-indigo-600 shadow border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-30">
+                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </a>
+                    </div>
+                    <span class="mt-1 text-[8px] font-black text-slate-500 uppercase">{{ $pc->inventory_code }}</span>
+                </div>
+            @empty
+                <div class="w-full flex items-center justify-center py-4 tray-empty-msg">
+                    <span class="text-xs text-slate-300 font-medium uppercase tracking-widest">Bandeja Vacía</span>
+                </div>
+            @endforelse
+        </div>
     </div>
 </div>
 
@@ -306,24 +361,33 @@ document.addEventListener('DOMContentLoaded', () => {
     slots.forEach(slot => {
         slot.addEventListener('dragover', (e) => {
             e.preventDefault();
-            slot.classList.add('bg-indigo-50');
-            slot.classList.add('scale-105');
+            slot.classList.add('bg-indigo-50/50');
+            if (!slot.id.includes('tray')) {
+                slot.classList.add('scale-105');
+            } else {
+                slot.classList.add('border-indigo-300');
+            }
         });
 
         slot.addEventListener('dragleave', () => {
-            slot.classList.remove('bg-indigo-50');
+            slot.classList.remove('bg-indigo-50/50');
             slot.classList.remove('scale-105');
+            slot.classList.remove('border-indigo-300');
         });
 
         slot.addEventListener('drop', async (e) => {
             e.preventDefault();
-            slot.classList.remove('bg-indigo-50');
+            slot.classList.remove('bg-indigo-50/50');
             slot.classList.remove('scale-105');
+            slot.classList.remove('border-indigo-300');
 
             const equipmentId = e.dataTransfer.getData('text/plain');
             const newPosition = slot.dataset.index;
 
-            if (!equipmentId || !newPosition) return;
+            if (!equipmentId) return;
+
+            // Evitar refrescar si se suelta en la misma posición (aunque AJAX lo maneja)
+            // if (newPosition === draggableOriginIndex) return; 
 
             try {
                 const response = await fetch(`{{ route('rooms.reorder', $room->id) }}`, {
@@ -339,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (response.ok) {
-                    window.location.reload(); // Recargar para ver el cambio reflejado
+                    window.location.reload(); 
                 } else {
                     alert('Error al mover el equipo');
                 }
@@ -355,7 +419,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
     .drop-slot { transition: all 0.2s ease; cursor: default; }
     .draggable-pc { transition: all 0.2s ease; }
-    .drop-slot.bg-indigo-50 { border-radius: 1rem; }
+    .drop-slot.bg-indigo-50\/50 { border-radius: 1rem; }
     .writing-vertical-lr { writing-mode: vertical-lr; }
+    #tray-dropzone.bg-indigo-50\/50 { border-color: #6366f1; }
 </style>
 @endsection

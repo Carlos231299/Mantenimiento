@@ -54,7 +54,7 @@
                     </div>
 
                     <div id="findingsList" class="space-y-2 mb-2">
-                        <!-- Items agregados por JS -->
+                        <!-- Items cargados por PHP/JS -->
                     </div>
                     
                     <!-- Hidden inputs para enviar al backend -->
@@ -62,23 +62,36 @@
                 </div>
             </div>
 
+            @php
+                $existingFindings = [];
+                if (isset($equipment) && $equipment->activeTask) {
+                    $existingFindings = $equipment->activeTask->checklist_data['preliminary_findings'] ?? [];
+                }
+            @endphp
+
             <script>
-                function addFinding() {
+                // Inicializar con hallazgos existentes
+                document.addEventListener('DOMContentLoaded', () => {
+                    const initialFindings = @json($existingFindings);
+                    initialFindings.forEach(text => addFinding(text));
+                });
+
+                function addFinding(text = null) {
                     const input = document.getElementById('findingInput');
-                    const text = input.value.trim();
+                    const findingText = text || input.value.trim();
                     
-                    if (text) {
+                    if (findingText) {
                         const list = document.getElementById('findingsList');
                         const inputsContainer = document.getElementById('findingsInputs');
-                        const id = Date.now(); // ID único simple
+                        const id = Math.random().toString(36).substr(2, 9); // ID único
 
                         // 1. Agregar visualmente
                         const item = document.createElement('div');
-                        item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200";
+                        item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 animate-in fade-in slide-in-from-left-2 duration-200";
                         item.id = `finding-${id}`;
                         item.innerHTML = `
-                            <span class="text-sm text-gray-700">• ${text}</span>
-                            <button type="button" onclick="removeFinding(${id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Eliminar</button>
+                            <span class="text-sm text-gray-700">• ${findingText}</span>
+                            <button type="button" onclick="removeFinding('${id}')" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1">Eliminar</button>
                         `;
                         list.appendChild(item);
 
@@ -86,19 +99,23 @@
                         const hiddenInput = document.createElement('input');
                         hiddenInput.type = 'hidden';
                         hiddenInput.name = 'findings[]';
-                        hiddenInput.value = text;
+                        hiddenInput.value = findingText;
                         hiddenInput.id = `input-${id}`;
                         inputsContainer.appendChild(hiddenInput);
 
-                        // 3. Limpiar
-                        input.value = '';
-                        input.focus();
+                        // 3. Limpiar (si no es carga inicial)
+                        if (!text) {
+                            input.value = '';
+                            input.focus();
+                        }
                     }
                 }
 
                 function removeFinding(id) {
-                    document.getElementById(`finding-${id}`).remove();
-                    document.getElementById(`input-${id}`).remove();
+                    const item = document.getElementById(`finding-${id}`);
+                    const input = document.getElementById(`input-${id}`);
+                    if (item) item.remove();
+                    if (input) input.remove();
                 }
             </script>
 

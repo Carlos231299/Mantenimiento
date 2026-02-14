@@ -53,15 +53,24 @@ class EquipmentController extends Controller
         $oldStatus = $equipment->status;
         $equipment->update($validated);
 
-        // Lógica de Negocio: Generar Tarea Automática
+        // 1. Sincronizar Hallazgos con Tarea Activa (Si existe)
+        $activeTask = $equipment->activeTask;
+        if ($activeTask) {
+            $checklistData = $activeTask->checklist_data ?? [];
+            if ($request->has('findings')) {
+                $checklistData['preliminary_findings'] = $request->findings;
+            } else {
+                // Si enviaron el form pero sin hallazgos, vaciarlos (según lógica del form)
+                $checklistData['preliminary_findings'] = [];
+            }
+            $activeTask->update(['checklist_data' => $checklistData]);
+        }
+
+        // 2. Lógica de Negocio: Generar Tarea Automática
         // Si cambia a Falla o Mantenimiento y no tiene tarea activa
         if (in_array($request->status, ['faulty', 'maintenance']) && $oldStatus == 'operational') {
             
-            $hasOpenTask = $equipment->tasks()
-                ->whereIn('status', ['pending', 'in_progress'])
-                ->exists();
-
-            if (!$hasOpenTask) {
+            if (!$activeTask) {
                 // Guardar hallazgos en checklist_data para separarlos de las observaciones de mantenimiento
                 $checklistData = [];
                 if ($request->has('findings') && count($request->findings) > 0) {
@@ -73,7 +82,7 @@ class EquipmentController extends Controller
                     'status' => 'pending',
                     'priority' => ($request->status == 'faulty') ? 'high' : 'normal',
                     'checklist_data' => $checklistData,
-                    'observations' => null, // Se deja vacío para el técnico
+                    'observations' => null, 
                     'created_at' => now(),
                 ]);
             }

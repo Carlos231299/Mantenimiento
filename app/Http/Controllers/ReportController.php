@@ -131,17 +131,17 @@ class ReportController extends Controller
             ->get();
 
         // 3. Resumen Narrativo Automático
-        $summary = "Durante el último periodo, se ha mantenido un parque tecnológico de {$totalEquipment} equipos distribuidos en {$totalRooms} salas. ";
-        $summary .= "A la fecha, el índice de salud global se sitúa en un {$healthIndex}%, con {$operationalEquipment} equipos operativos. ";
+        $summary = "Se presenta el informe de gestión de mantenimiento técnico de laboratorios. Actualmente se cuenta con un parque tecnológico de {$totalEquipment} equipos distribuidos en {$totalRooms} salas bajo supervisión. ";
+        $summary .= "Tras las intervenciones realizadas en el periodo, el índice de operatividad global se sitúa en un {$healthIndex}%, con {$operationalEquipment} equipos funcionando en condiciones óptimas. ";
         
         if ($faultyEquipmentCount > 0) {
-            $summary .= "Se han identificado {$faultyEquipmentCount} equipos con fallas críticas o en estado de mantenimiento, los cuales han sido categorizados como prioridad alta para futuras intervenciones correctivas. ";
+            $summary .= "Se han identificado {$faultyEquipmentCount} equipos con requerimientos de intervención técnica correctiva, los cuales han sido priorizados en el plan de acción inmediato. ";
         } else {
-            $summary .= "No se reportan fallas críticas activas en las salas inspeccionadas. ";
+            $summary .= "Al cierre del reporte, no se registran equipos con fallas críticas pendientes de atención en las áreas inspeccionadas. ";
         }
 
         if ($pendingTasksCount > 0) {
-            $summary .= "Actualmente existen {$pendingTasksCount} tareas de mantenimiento pendientes por ejecutar.";
+            $summary .= "Se encuentran programadas {$pendingTasksCount} tareas de mantenimiento preventivo para asegurar la continuidad operativa del parque tecnológico.";
         }
 
         // 4. Prioridades

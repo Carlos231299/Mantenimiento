@@ -191,7 +191,7 @@
 
                 <!-- PASILLO CENTRAL (Aisle) -->
                 <div class="w-24 flex flex-col items-center justify-center border-x-2 border-dashed border-slate-300 mx-4 bg-slate-50/50">
-                    <span class="text-slate-300 font-black text-4xl uppercase tracking-widest writing-vertical-lr transform rotate-90 py-10">PASILLO</span>
+                    <span class="text-slate-300 font-black text-4xl uppercase tracking-widest writing-vertical-lr py-10">PASILLO</span>
                 </div>
 
                 <!-- ALA DERECHA (Right Wing) -->

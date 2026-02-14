@@ -50,40 +50,28 @@ class TaskController extends Controller
         // Si no existe 'preliminary_findings' en checklist_data pero SÍ hay texto en observations
         // intentamos extraerlo para mostrarlo correctamente.
         if (!isset($task->checklist_data['preliminary_findings']) && $task->observations) {
+            $lines = explode("\n", $task->observations);
+            $findings = [];
             
-            // 1. Detectar patrón antiguo: "Hallazgos Preliminares:\n- item..."
-            if (str_contains($task->observations, 'Hallazgos Preliminares:')) {
-                // Extraer el texto de los hallazgos
-                $parts = explode('Hallazgos Preliminares:', $task->observations);
-                $findingsText = $parts[1] ?? '';
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line)) continue;
                 
-                // Convertir líneas "- item" en array
-                $lines = explode("\n", $findingsText);
-                $findings = [];
-                foreach ($lines as $line) {
-                    $line = trim($line);
-                    if (str_starts_with($line, '- ')) {
-                        $findings[] = substr($line, 2);
-                    } elseif (!empty($line)) {
-                        $findings[] = $line;
-                    }
-                }
+                // Si la línea empieza con "- " o "• ", remover el prefijo
+                if (str_starts_with($line, '- ')) $line = substr($line, 2);
+                if (str_starts_with($line, '• ')) $line = substr($line, 2);
+                
+                // Ignorar líneas del sistema
+                if (str_contains($line, 'Reporte automático') || str_contains($line, 'Hallazgos Preliminares')) continue;
+                
+                $findings[] = $line;
+            }
 
-                // Inyectar en checklist_data (en memoria, para la vista)
+            if (!empty($findings)) {
                 $data = $task->checklist_data ?? [];
                 $data['preliminary_findings'] = $findings;
                 $task->checklist_data = $data;
-
-                // Limpiar observaciones para que el textarea aparezca vacío o limpio
-                // Quitamos el header "Reporte automático..." y los hallazgos.
-                // Si había notas extra del admin, intentar conservarlas (difícil saber qué es qué), 
-                // pero por seguridad, si es el texto default, lo dejamos vacío.
-                if (str_contains($task->observations, 'Reporte automático desde Inspección de Sala')) {
-                     $task->observations = null; 
-                }
-
-                // GUARDAR CAMBIOS: Es crucial guardar para que la migración sea permanente
-                // y esté disponible cuando se llame al método update() y para futuras visualizaciones.
+                // No limpiamos observations por si acaso, el técnico lo verá y podrá borrarlo manualmente si quiere
                 $task->save();
             }
         }
@@ -102,15 +90,11 @@ class TaskController extends Controller
             if ($request->has('maintenance_findings')) {
                 $data['maintenance_findings'] = $request->maintenance_findings;
             }
-            // Preserve existing preliminary findings if not present in request (they are usually not sent back if not editable, but we should be careful)
-            // Actually, usually we want to merge with existing DB data or ensure the view sends everything.
-            // Simplified: The view will send everything in checklist_data array.
-            // Preliminary findings might need to be preserved if the view doesn't send them back.
-            // Let's grab existing to be safe.
-            $existingData = $task->checklist_data ?? [];
-            if (isset($existingData['preliminary_findings'])) {
-                $data['preliminary_findings'] = $existingData['preliminary_findings'];
-            }
+            
+            // Si la request trae preliminary_findings, usarlas. 
+            // Si NO trae (campo vacío en el form), pondremos array vacío.
+            // No preservamos de la DB porque el usuario puede haber borrado todos.
+            $data['preliminary_findings'] = $request->input('checklist_data.preliminary_findings', []);
 
             $task->update([
                 'checklist_data' => $data,
@@ -131,10 +115,7 @@ class TaskController extends Controller
         if ($request->has('maintenance_findings')) {
             $data['maintenance_findings'] = $request->maintenance_findings;
         }
-        $existingData = $task->checklist_data ?? [];
-        if (isset($existingData['preliminary_findings'])) {
-            $data['preliminary_findings'] = $existingData['preliminary_findings'];
-        }
+        $data['preliminary_findings'] = $request->input('checklist_data.preliminary_findings', []);
 
         $task->update([
             'status' => 'completed',

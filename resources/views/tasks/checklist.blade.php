@@ -21,20 +21,33 @@
         @csrf
         @method('PUT')
         
-        <!-- Hallazgos Preliminares (Si existen) -->
-        @if(isset($task->checklist_data['preliminary_findings']) && count($task->checklist_data['preliminary_findings']) > 0)
-            <div class="p-6 bg-amber-50 border-b border-amber-100">
-                <h4 class="text-lg font-semibold text-amber-800 mb-2 flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    Hallazgos Preliminares Reportados
-                </h4>
-                <ul class="list-disc list-inside text-sm text-amber-700 bg-white/50 p-3 rounded-lg border border-amber-200">
-                    @foreach($task->checklist_data['preliminary_findings'] as $finding)
-                        <li>{{ $finding }}</li>
-                    @endforeach
-                </ul>
+        <!-- Hallazgos Preliminares (Editables) -->
+        <div class="p-6 bg-amber-50 border-b border-amber-100">
+            <h4 class="text-lg font-semibold text-amber-800 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Hallazgos Preliminares
+            </h4>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="preliminaryFindingInput" class="block w-full rounded-md border-amber-200 shadow-sm focus:border-amber-500 focus:ring-amber-500 sm:text-sm h-10 border px-3 bg-white" placeholder="Ej. Pantalla parpadea, Teclado sucio...">
+                <button type="button" onclick="addPreliminaryFinding()" class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm transition-colors shadow-sm">
+                    Agregar
+                </button>
             </div>
-        @endif
+
+            <div id="preliminaryFindingsList" class="space-y-2">
+                @php
+                    $findings = $task->checklist_data['preliminary_findings'] ?? [];
+                @endphp
+                @foreach($findings as $index => $finding)
+                <div class="flex justify-between items-center bg-white/80 p-3 rounded-lg border border-amber-200 shadow-sm animate-in fade-in slide-in-from-left-2" id="prelim-finding-{{ $index }}">
+                    <input type="hidden" name="checklist_data[preliminary_findings][]" value="{{ $finding }}">
+                    <span class="text-sm text-amber-900 font-medium">• {{ $finding }}</span>
+                    <button type="button" onclick="document.getElementById('prelim-finding-{{ $index }}').remove()" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 rounded border border-red-100">Eliminar</button>
+                </div>
+                @endforeach
+            </div>
+        </div>
         
         <!-- Section: Hardware Check -->
         <div class="p-6 border-b border-gray-100">
@@ -268,6 +281,28 @@
         </div>
 
         <script>
+            function addPreliminaryFinding() {
+                const input = document.getElementById('preliminaryFindingInput');
+                const text = input.value.trim();
+                
+                if (text) {
+                    const list = document.getElementById('preliminaryFindingsList');
+                    const id = Date.now();
+                    
+                    const item = document.createElement('div');
+                    item.className = "flex justify-between items-center bg-white/80 p-3 rounded-lg border border-amber-200 shadow-sm animate-in fade-in slide-in-from-left-2 mt-2";
+                    item.id = `prelim-finding-${id}`;
+                    item.innerHTML = `
+                        <input type="hidden" name="checklist_data[preliminary_findings][]" value="${text}">
+                        <span class="text-sm text-amber-900 font-medium">• ${text}</span>
+                        <button type="button" onclick="document.getElementById('prelim-finding-${id}').remove()" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 rounded border border-red-100">Eliminar</button>
+                    `;
+                    list.appendChild(item);
+                    input.value = '';
+                    input.focus();
+                }
+            }
+
             // Utility: Mutually Exclusive Checkboxes
             function toggleMutex(checkbox) {
                 if (!checkbox.checked) return; // If unchecking, do nothing (allow both empty)

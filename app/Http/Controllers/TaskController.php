@@ -28,7 +28,19 @@ class TaskController extends Controller
         $inProgress = $tasks->where('status', 'in_progress')->count();
         $completed = $tasks->where('status', 'completed')->count();
 
-        return view('tasks.index', compact('tasks', 'pending', 'inProgress', 'completed', 'rooms', 'roomId'));
+        // Agrupar por sala para la vista
+        $groupedTasks = $tasks->groupBy(function($task) {
+            return $task->equipment->room->name ?? 'Sin Sala';
+        });
+
+        return view('tasks.index', [
+            'groupedTasks' => $groupedTasks, 
+            'pending' => $pending, 
+            'inProgress' => $inProgress, 
+            'completed' => $completed, 
+            'rooms' => $rooms, 
+            'roomId' => $roomId
+        ]);
     }
 
     public function show($id)
@@ -131,6 +143,6 @@ class TaskController extends Controller
             $task->equipment->update(['status' => $finalStatus]);
         }
 
-        return redirect()->route('tasks.index');
+        return redirect()->route('rooms.show', $task->equipment->room_id)->with('success', 'Mantenimiento finalizado correctamente.');
     }
 }

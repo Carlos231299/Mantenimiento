@@ -60,8 +60,18 @@
         </nav>
     </div>
 
-    <!-- TASKS LIST -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- TASKS LIST GROUPED BY ROOM -->
+    @forelse ($groupedTasks as $roomName => $roomTasks)
+    <div class="mt-8 mb-4 flex items-center">
+        <div class="bg-slate-800 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm flex items-center">
+            <svg class="w-4 h-4 mr-2 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            {{ $roomName }}
+            <span class="ml-2 bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-xs">{{ $roomTasks->count() }}</span>
+        </div>
+        <div class="ml-4 h-px bg-gray-200 flex-grow"></div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -76,14 +86,13 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    
-                    @forelse ($tasks as $task)
+                    @foreach ($roomTasks as $task)
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div>
                                     <div class="text-sm font-bold text-gray-900">#{{ $task->id }} - {{ $task->equipment->inventory_code }}</div>
-                                    <div class="text-sm text-gray-500">{{ $task->equipment->room->name ?? 'Sala S/N' }}</div>
+                                    <div class="text-xs text-gray-500">{{ $task->equipment->is_teacher_pc ? 'PC de Docente' : 'PC de Estudiante' }}</div>
                                 </div>
                             </div>
                         </td>
@@ -139,17 +148,15 @@
                             @endif
                         </td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                            <p class="text-sm">No hay tareas registradas.</p>
-                        </td>
-                    </tr>
-                    @endforelse
-
+                    @endforeach
                 </tbody>
             </table>
         </div>
     </div>
+    @empty
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center text-gray-500">
+        <p class="text-sm">No hay tareas pendientes en ninguna sala.</p>
+    </div>
+    @endforelse
 </div>
 @endsection

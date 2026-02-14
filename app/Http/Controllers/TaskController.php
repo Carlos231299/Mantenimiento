@@ -28,18 +28,19 @@ class TaskController extends Controller
         $inProgress = $tasks->where('status', 'in_progress')->count();
         $completed = $tasks->where('status', 'completed')->count();
 
-        // Agrupar por sala para la vista
+        // Agrupar por sala para la vista principal
         $groupedTasks = $tasks->groupBy(function($task) {
-            return $task->equipment->room->name ?? 'Sin Sala';
+            return $task->equipment->room->id;
         });
 
         return view('tasks.index', [
+            'tasks' => $tasks, 
             'groupedTasks' => $groupedTasks, 
             'pending' => $pending, 
             'inProgress' => $inProgress, 
             'completed' => $completed, 
             'rooms' => $rooms, 
-            'roomId' => $roomId
+            'currentRoomId' => $roomId
         ]);
     }
 

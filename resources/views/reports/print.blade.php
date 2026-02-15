@@ -160,14 +160,36 @@
                         @php
                             $findings = $task->checklist_data['hardware']['findings'] ?? [];
                             if(empty($findings)) $findings = $task->checklist_data['maintenance_findings'] ?? [];
+                            
+                            // Count checklist items
+                            $hwKeys = ['cleaning', 'peripherals', 'cables', 'screen', 'cooler', 'thermal_paste'];
+                            $swKeys = ['antivirus', 'tmp_files', 'disk_opt', 'drivers', 'unauthorized_sw', 'windows_update'];
+                            
+                            $hwDone = 0; $hwTotal = count($hwKeys);
+                            foreach($hwKeys as $k) if(isset($task->checklist_data['hardware'][$k]['checked']) || isset($task->checklist_data['hardware'][$k]['na'])) $hwDone++;
+                            
+                            $swDone = 0; $swTotal = count($swKeys);
+                            foreach($swKeys as $k) if(isset($task->checklist_data['software'][$k]['checked']) || isset($task->checklist_data['software'][$k]['na'])) $swDone++;
+                            
+                            // Custom items
+                            if(isset($task->checklist_data['hardware']['custom'])) {
+                                $hwTotal += count($task->checklist_data['hardware']['custom']);
+                                $hwDone += count($task->checklist_data['hardware']['custom']); // Assume custom added are done
+                            }
+                            if(isset($task->checklist_data['software']['custom'])) {
+                                $swTotal += count($task->checklist_data['software']['custom']);
+                                $swDone += count($task->checklist_data['software']['custom']);
+                            }
                         @endphp
-                        <p class="font-bold text-slate-800 mb-1">Mantenimiento Preventivo Integral.</p>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">HW: {{ $hwDone }}/{{ $hwTotal }}</span>
+                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">SW: {{ $swDone }}/{{ $swTotal }}</span>
+                        </div>
+                        <p class="font-bold text-slate-800">Mantenimiento Preventivo Integral.</p>
                         @if(!empty($findings))
                             <span class="text-slate-500 italic block mt-1">
-                                <strong class="not-italic text-slate-600 uppercase text-[8px] tracking-tighter">Falla corregida:</strong> {{ Str::limit(implode(', ', $findings), 150) }}
+                                <strong class="not-italic text-slate-600 uppercase text-[8px] tracking-tighter">Falla corregida:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
                             </span>
-                        @else
-                            <span class="text-slate-400 italic">Inspección de hardware y software sin observaciones técnicas.</span>
                         @endif
                     </td>
                 </tr>
@@ -181,12 +203,12 @@
     <!-- SIGNATURES -->
     <div class="mt-20 pt-16 border-t border-gray-100 flex justify-around">
         <div class="w-72 text-center border-t border-slate-900 pt-3">
-            <p class="text-[9px] font-black tracking-widest text-slate-900">FIRMA SUPERVISOR</p>
-            <p class="text-[8px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Soporte Técnico e Infraestructura</p>
+            <p class="text-[9px] font-black tracking-widest text-slate-900 uppercase">RESPONSABLE</p>
+            <p class="text-[8px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Firma de conformidad</p>
         </div>
         <div class="w-72 text-center border-t border-slate-900 pt-3">
-            <p class="text-[9px] font-black tracking-widest text-slate-900 uppercase">{{ auth()->user()->name ?? 'Técnico Responsable' }}</p>
-            <p class="text-[8px] text-slate-400 font-bold mt-1 tracking-tighter uppercase">Firma del ejecutor de la inspección</p>
+            <p class="text-[9px] font-black tracking-widest text-slate-900 uppercase">ENCARGADO DE LAS SALAS DE CÓMPUTO</p>
+            <p class="text-[8px] text-slate-400 font-bold mt-1 tracking-tighter uppercase">Validación de infraestructura</p>
         </div>
     </div>
 

@@ -167,6 +167,20 @@ class ReportController extends Controller
         if ($failedToMaintain > 0) {
             $summary .= "Es importante destacar que en {$failedToMaintain} equipos con FALLA CRÍTICA (sin encendido/daño físico), el protocolo preventivo estándar no pudo aplicarse en su totalidad debido a su condición inoperativa, siendo priorizados para reparación. ";
         }
+        
+        // 5. Salud por Sala (Restaurado)
+        $roomHealthRanking = [];
+        foreach ($rooms as $room) {
+            $total = $room->equipments_count;
+            $op = Equipment::where('room_id', $room->id)->where('status', 'operational')->count();
+            $roomHealthRanking[] = [
+                'name' => $room->name,
+                'health' => ($total > 0) ? round(($op / $total) * 100) : 0,
+                'total' => $total,
+                'faulty' => $total - $op
+            ];
+        }
+        usort($roomHealthRanking, fn($a, $b) => $a['health'] <=> $b['health']);
 
         $summary .= "El índice de salud global actual es del {$healthIndex}%, con {$operationalEquipment} estaciones 100% funcionales. ";
 

@@ -130,46 +130,43 @@ class ReportController extends Controller
             ->with('room')
             ->get();
 
-        // 3. Resumen Narrativo Automático
-        $summary = "Se presenta el informe de gestión de mantenimiento técnico de laboratorios. Actualmente se cuenta con un parque tecnológico de {$totalEquipment} equipos distribuidos en {$totalRooms} salas bajo supervisión. ";
-        $summary .= "Tras las intervenciones realizadas en el periodo, el índice de operatividad global se sitúa en un {$healthIndex}%, con {$operationalEquipment} equipos funcionando en condiciones óptimas. ";
-        
-        if ($faultyEquipmentCount > 0) {
-            $summary .= "Se han identificado {$faultyEquipmentCount} equipos con requerimientos de intervención técnica correctiva, los cuales han sido priorizados en el plan de acción inmediato. ";
-        } else {
-            $summary .= "Al cierre del reporte, no se registran equipos con fallas críticas pendientes de atención en las áreas inspeccionadas. ";
-        }
-
-        if ($pendingTasksCount > 0) {
-            $summary .= "Se encuentran programadas {$pendingTasksCount} tareas de mantenimiento preventivo para asegurar la continuidad operativa del parque tecnológico.";
-        }
-
-        // 4. Prioridades
-        $priorityStats = Task::where('status', 'pending')
-            ->selectRaw('priority, count(*) as count')
-            ->groupBy('priority')
-            ->pluck('count', 'priority')->toArray();
-
-        // 5. Salud por Sala
-        $roomHealthRanking = [];
-        foreach ($rooms as $room) {
-            $total = $room->equipments_count;
-            $op = Equipment::where('room_id', $room->id)->where('status', 'operational')->count();
-            $roomHealthRanking[] = [
-                'name' => $room->name,
-                'health' => ($total > 0) ? round(($op / $total) * 100) : 0,
-                'total' => $total,
-                'faulty' => $total - $op
-            ];
-        }
-        usort($roomHealthRanking, fn($a, $b) => $a['health'] <=> $b['health']);
-
-        // 6. Mantenimientos (Último mes)
+        // 3. Mantenimientos (Último mes) - Moved up for Summary
         $completedTasks = Task::where('status', 'completed')
              ->where('completed_at', '>=', Carbon::now()->subMonth())
              ->with(['equipment.room', 'technician'])
              ->orderByDesc('completed_at')
              ->get();
+
+        // 4. Resumen Narrativo Automático Detallado
+        $cleanedUnits = 0;
+        $optimizedUnits = 0;
+        $failedToMaintain = 0;
+
+        foreach ($completedTasks as $task) {
+            $hasCleaning = isset($task->checklist_data['hardware']['cleaning']['checked']) || isset($task->checklist_data['hardware']['cleaning']['na']); // Count NA as inspected
+            $hasOpt = isset($task->checklist_data['software']['disk_opt']['checked']);
+            
+            // If the equipment is currently faulty/maintenance, assume maintenance was limited or it's a critical failure found
+            if ($task->equipment->status === 'faulty' || $task->equipment->status === 'maintenance') {
+                $failedToMaintain++;
+            } else {
+                if($hasCleaning) $cleanedUnits++;
+                if($hasOpt) $optimizedUnits++;
+            }
+        }
+
+        $summary = "Se presenta el informe técnico de infraestructura correspondiente al periodo actual. Se gestiona un parque tecnológico de {$totalEquipment} equipos en {$totalRooms} laboratorios. ";
+        $summary .= "Se ejecutaron protocolos de mantenimiento preventivo, abarcando limpieza interna profunda, gestión térmica y optimización de software en las unidades operativas. ";
+        
+        if ($failedToMaintain > 0) {
+            $summary .= "Es importante destacar que en {$failedToMaintain} equipos con FALLA CRÍTICA (sin encendido/daño físico), el protocolo preventivo estándar no pudo aplicarse en su totalidad debido a su condición inoperativa, siendo priorizados para reparación. ";
+        }
+
+        $summary .= "El índice de salud global actual es del {$healthIndex}%, con {$operationalEquipment} estaciones 100% funcionales. ";
+
+        if ($pendingTasksCount > 0) {
+            $summary .= "Permanecen programadas {$pendingTasksCount} intervenciones adicionales para garantizar la continuidad del servicio.";
+        }
 
         return view('reports.print', compact(
             'date', 

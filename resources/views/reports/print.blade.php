@@ -173,22 +173,28 @@
 
                             $hwPerformed = [];
                             foreach($hwMap as $key => $label) {
-                                if(isset($task->checklist_data['hardware'][$key]['checked']) || isset($task->checklist_data['hardware'][$key]['na'])) {
+                                // Only include if strictly CHECKED (ignore N/A)
+                                if(isset($task->checklist_data['hardware'][$key]['checked'])) {
                                     $hwPerformed[] = $label;
                                 }
                             }
                             if(isset($task->checklist_data['hardware']['custom'])) {
-                                foreach($task->checklist_data['hardware']['custom'] as $c) $hwPerformed[] = is_array($c) ? $c['name'] : $c;
+                                foreach($task->checklist_data['hardware']['custom'] as $c) {
+                                    if(is_array($c) && isset($c['checked'])) $hwPerformed[] = $c['name'];
+                                }
                             }
 
                             $swPerformed = [];
                             foreach($swMap as $key => $label) {
-                                if(isset($task->checklist_data['software'][$key]['checked']) || isset($task->checklist_data['software'][$key]['na'])) {
+                                // Only include if strictly CHECKED
+                                if(isset($task->checklist_data['software'][$key]['checked'])) {
                                     $swPerformed[] = $label;
                                 }
                             }
                             if(isset($task->checklist_data['software']['custom'])) {
-                                foreach($task->checklist_data['software']['custom'] as $c) $swPerformed[] = is_array($c) ? $c['name'] : $c;
+                                foreach($task->checklist_data['software']['custom'] as $c) {
+                                     if(is_array($c) && isset($c['checked'])) $swPerformed[] = $c['name'];
+                                }
                             }
                         @endphp
                         
@@ -214,7 +220,7 @@
 
                         @if(!empty($findings))
                             <span class="text-red-500 block text-[9px] leading-tight bg-red-50 p-1 rounded border border-red-100">
-                                <strong class="font-black uppercase tracking-tighter">Falla corregida:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
+                                <strong class="font-black uppercase tracking-tighter">Falla Crítica:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
                             </span>
                         @else
                             <span class="text-slate-400 italic text-[9px]">Mantenimiento preventivo sin incidencias.</span>

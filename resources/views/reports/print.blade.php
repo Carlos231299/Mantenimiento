@@ -161,35 +161,63 @@
                             $findings = $task->checklist_data['hardware']['findings'] ?? [];
                             if(empty($findings)) $findings = $task->checklist_data['maintenance_findings'] ?? [];
                             
-                            // Count checklist items
-                            $hwKeys = ['cleaning', 'peripherals', 'cables', 'screen', 'cooler', 'thermal_paste'];
-                            $swKeys = ['antivirus', 'tmp_files', 'disk_opt', 'drivers', 'unauthorized_sw', 'windows_update'];
-                            
-                            $hwDone = 0; $hwTotal = count($hwKeys);
-                            foreach($hwKeys as $k) if(isset($task->checklist_data['hardware'][$k]['checked']) || isset($task->checklist_data['hardware'][$k]['na'])) $hwDone++;
-                            
-                            $swDone = 0; $swTotal = count($swKeys);
-                            foreach($swKeys as $k) if(isset($task->checklist_data['software'][$k]['checked']) || isset($task->checklist_data['software'][$k]['na'])) $swDone++;
-                            
-                            // Custom items
+                            // Helper for checklist labels
+                            $hwMap = [
+                                'cleaning' => 'Limpieza Int.', 'thermal_paste' => 'Pasta Térmica', 'cooler' => 'Coolers',
+                                'peripherals' => 'Periféricos', 'cables' => 'Gestión Cables', 'screen' => 'Limpieza Pantalla'
+                            ];
+                            $swMap = [
+                                'antivirus' => 'Antivirus', 'tmp_files' => 'Archivos Temp.', 'disk_opt' => 'Opt. Disco',
+                                'drivers' => 'Drivers', 'unauthorized_sw' => 'SW No Autorizado', 'windows_update' => 'Win. Update'
+                            ];
+
+                            $hwPerformed = [];
+                            foreach($hwMap as $key => $label) {
+                                if(isset($task->checklist_data['hardware'][$key]['checked']) || isset($task->checklist_data['hardware'][$key]['na'])) {
+                                    $hwPerformed[] = $label;
+                                }
+                            }
                             if(isset($task->checklist_data['hardware']['custom'])) {
-                                $hwTotal += count($task->checklist_data['hardware']['custom']);
-                                $hwDone += count($task->checklist_data['hardware']['custom']); // Assume custom added are done
+                                foreach($task->checklist_data['hardware']['custom'] as $c) $hwPerformed[] = is_array($c) ? $c['name'] : $c;
+                            }
+
+                            $swPerformed = [];
+                            foreach($swMap as $key => $label) {
+                                if(isset($task->checklist_data['software'][$key]['checked']) || isset($task->checklist_data['software'][$key]['na'])) {
+                                    $swPerformed[] = $label;
+                                }
                             }
                             if(isset($task->checklist_data['software']['custom'])) {
-                                $swTotal += count($task->checklist_data['software']['custom']);
-                                $swDone += count($task->checklist_data['software']['custom']);
+                                foreach($task->checklist_data['software']['custom'] as $c) $swPerformed[] = is_array($c) ? $c['name'] : $c;
                             }
                         @endphp
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">HW: {{ $hwDone }}/{{ $hwTotal }}</span>
-                            <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">SW: {{ $swDone }}/{{ $swTotal }}</span>
+                        
+                        <div class="space-y-1 mb-2">
+                            @if(!empty($hwPerformed))
+                            <div class="flex flex-wrap gap-1">
+                                <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">HW:</span>
+                                @foreach($hwPerformed as $item)
+                                    <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
+                                @endforeach
+                            </div>
+                            @endif
+                            
+                            @if(!empty($swPerformed))
+                            <div class="flex flex-wrap gap-1">
+                                <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">SW:</span>
+                                @foreach($swPerformed as $item)
+                                    <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
+                                @endforeach
+                            </div>
+                            @endif
                         </div>
-                        <p class="font-bold text-slate-800">Mantenimiento Preventivo Integral.</p>
+
                         @if(!empty($findings))
-                            <span class="text-slate-500 italic block mt-1">
-                                <strong class="not-italic text-slate-600 uppercase text-[8px] tracking-tighter">Falla corregida:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
+                            <span class="text-red-500 block text-[9px] leading-tight bg-red-50 p-1 rounded border border-red-100">
+                                <strong class="font-black uppercase tracking-tighter">Falla corregida:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
                             </span>
+                        @else
+                            <span class="text-slate-400 italic text-[9px]">Mantenimiento preventivo sin incidencias.</span>
                         @endif
                     </td>
                 </tr>
@@ -212,15 +240,30 @@
         </div>
     </div>
 
+    <!-- Chart.js DataLabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
     <script>
-        // Use high-resolution scaling for charts
+        // Register the plugin
+        Chart.register(ChartDataLabels);
+
+        // Data for charts
         const healthData = {
             labels: ['Operativos', 'Con Falla'],
             datasets: [{
                 data: [{{ $totalEquipment - $faultyEquipmentCount }}, {{ $faultyEquipmentCount }}],
-                backgroundColor: ['#0f172a', '#e11d48'], // Slate-900 and Rose-600
+                backgroundColor: ['#3b82f6', '#ef4444'], // Blue-500 instead of Slate-900
                 borderWidth: 0,
-                spacing: 5
+                spacing: 5,
+                datalabels: {
+                    color: ['#fff', '#fff'],
+                    font: { weight: 'bold', size: 12 },
+                    formatter: (value, ctx) => {
+                        let total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        let percentage = Math.round((value / total) * 100) + '%';
+                        return value > 0 ? percentage : '';
+                    }
+                }
             }]
         };
 
@@ -239,8 +282,11 @@
             type: 'doughnut',
             data: healthData,
             options: {
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true, color: '#475569' } } },
-                cutout: '65%'
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true, color: '#475569' } },
+                    datalabels: { display: true } 
+                },
+                cutout: '60%'
             }
         });
 
@@ -252,17 +298,30 @@
                 datasets: [{
                     label: '% Salud',
                     data: roomsValues,
-                    backgroundColor: roomsValues.map(v => v < 70 ? '#e11d48' : '#0f172a'),
-                    borderRadius: 4
+                    backgroundColor: roomsValues.map(v => v < 70 ? '#ef4444' : '#3b82f6'),
+                    borderRadius: 4,
+                    datalabels: {
+                        color: roomsValues.map(v => v < 70 ? '#ef4444' : '#3b82f6'),
+                        anchor: 'end',
+                        align: 'top',
+                        offset: -2,
+                        font: { weight: '900', size: 9 },
+                        formatter: (value) => value + '%'
+                    }
                 }]
             },
             options: {
                 indexAxis: 'y',
                 scales: { 
-                    x: { max: 100, display: false },
-                    y: { grid: { display: false }, border: { display: false }, ticks: { color: '#475569' } }
+                    x: { max: 115, display: false }, 
+// Increased max to fit labels
+                    y: { grid: { display: false }, border: { display: false }, ticks: { color: '#475569', font: {size: 9} } }
                 },
-                plugins: { legend: { display: false } }
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: { display: true }
+                },
+                layout: { padding: { right: 20 } }
             }
         });
 

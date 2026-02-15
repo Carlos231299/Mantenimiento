@@ -141,6 +141,12 @@ class ReportController extends Controller
         $cleanedUnits = 0;
         $optimizedUnits = 0;
         $failedToMaintain = 0;
+        
+        // 4.1 Prioridades (Restaurado)
+        $priorityStats = Task::where('status', 'pending')
+            ->selectRaw('priority, count(*) as count')
+            ->groupBy('priority')
+            ->pluck('count', 'priority')->toArray();
 
         foreach ($completedTasks as $task) {
             $hasCleaning = isset($task->checklist_data['hardware']['cleaning']['checked']) || isset($task->checklist_data['hardware']['cleaning']['na']); // Count NA as inspected

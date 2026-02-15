@@ -25,7 +25,7 @@
             .page-break { page-break-before: always; }
             
             /* Prevent breaking inside key components */
-            .break-inside-avoid, section, .rounded, .shadow-sm { break-inside: avoid; }
+            .break-inside-avoid { break-inside: avoid; }
             tr { break-inside: avoid; page-break-inside: avoid; }
             table { break-inside: auto; }
             

@@ -8,12 +8,33 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @media print {
-            body { -webkit-print-color-adjust: exact; background-color: white !important; }
-            .no-print { display: none; }
+            @page {
+                size: A4;
+                margin: 5mm 10mm; /* Tight margins for max space */
+            }
+            body { 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+                background-color: white !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+            }
+            .no-print { display: none !important; }
             .page-break { page-break-before: always; }
+            
+            /* Prevent breaking inside key components */
+            .break-inside-avoid, section, .rounded, .shadow-sm { break-inside: avoid; }
+            tr { break-inside: avoid; page-break-inside: avoid; }
+            table { break-inside: auto; }
+            
+            /* Hide URL/Date headers if browser supports */
+            @page { margin-header: 0; margin-footer: 0; }
         }
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        /* Ensure charts scale properly */
         canvas { max-width: 100% !important; height: auto !important; }
     </style>
 </head>

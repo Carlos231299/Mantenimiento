@@ -254,21 +254,20 @@
         Chart.register(ChartDataLabels);
 
         // Data for charts
+        @php
+            $opPct = $totalEquipment > 0 ? round(($operationalEquipment / $totalEquipment) * 100) : 0;
+            $faultyPct = $totalEquipment > 0 ? round(($faultyEquipmentCount / $totalEquipment) * 100) : 0;
+        @endphp
+
         const healthData = {
-            labels: ['Operativos', 'Con Falla'],
+            labels: ['Operativos ({{ $opPct }}%)', 'Con Falla ({{ $faultyPct }}%)'],
             datasets: [{
-                data: [{{ $totalEquipment - $faultyEquipmentCount }}, {{ $faultyEquipmentCount }}],
-                backgroundColor: ['#3b82f6', '#ef4444'], // Blue-500 instead of Slate-900
+                data: [{{ $operationalEquipment }}, {{ $faultyEquipmentCount }}],
+                backgroundColor: ['#3b82f6', '#ef4444'], // Blue-500 and Red-500
                 borderWidth: 0,
                 spacing: 5,
                 datalabels: {
-                    color: ['#fff', '#fff'],
-                    font: { weight: 'bold', size: 12 },
-                    formatter: (value, ctx) => {
-                        let total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                        let percentage = Math.round((value / total) * 100) + '%';
-                        return value > 0 ? percentage : '';
-                    }
+                    display: false // Hide internal labels as requested
                 }
             }]
         };
@@ -307,11 +306,11 @@
                     backgroundColor: roomsValues.map(v => v < 70 ? '#ef4444' : '#3b82f6'),
                     borderRadius: 4,
                     datalabels: {
-                        color: roomsValues.map(v => v < 70 ? '#ef4444' : '#3b82f6'),
+                        color: '#334155', // Slate-700
                         anchor: 'end',
-                        align: 'top',
-                        offset: -2,
-                        font: { weight: '900', size: 9 },
+                        align: 'end', // Place at the end of the bar (outside if possible, or right edge)
+                        offset: 4,
+                        font: { weight: '900', size: 10 },
                         formatter: (value) => value + '%'
                     }
                 }]

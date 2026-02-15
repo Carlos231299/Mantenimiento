@@ -142,6 +142,13 @@ class ReportController extends Controller
         $optimizedUnits = 0;
         $failedToMaintain = 0;
         
+        $actionsPerformed = []; // To collect unique actions
+        
+        // Checklist Labels Map (Same as in view)
+        $hwMap = ['cleaning' => 'Limpieza Int.', 'thermal_paste' => 'Pasta Térmica', 'cooler' => 'Coolers', 'peripherals' => 'Periféricos', 'cables' => 'Gestión Cables', 'screen' => 'Limpieza Pantalla'];
+        $swMap = ['antivirus' => 'Antivirus', 'tmp_files' => 'Archivos Temp.', 'disk_opt' => 'Opt. Disco', 'drivers' => 'Drivers', 'unauthorized_sw' => 'SW No Autorizado', 'windows_update' => 'Win. Update'];
+
+
         // 4.1 Prioridades (Restaurado)
         $priorityStats = Task::where('status', 'pending')
             ->selectRaw('priority, count(*) as count')
@@ -149,20 +156,29 @@ class ReportController extends Controller
             ->pluck('count', 'priority')->toArray();
 
         foreach ($completedTasks as $task) {
-            $hasCleaning = isset($task->checklist_data['hardware']['cleaning']['checked']) || isset($task->checklist_data['hardware']['cleaning']['na']); // Count NA as inspected
-            $hasOpt = isset($task->checklist_data['software']['disk_opt']['checked']);
+            // Check performed actions
+             foreach($hwMap as $key => $label) {
+                if(isset($task->checklist_data['hardware'][$key]['checked'])) $actionsPerformed[$label] = true;
+            }
+            foreach($swMap as $key => $label) {
+                if(isset($task->checklist_data['software'][$key]['checked'])) $actionsPerformed[$label] = true;
+            }
             
+            // Stats
+            if(isset($task->checklist_data['hardware']['cleaning']['checked'])) $cleanedUnits++;
+            if(isset($task->checklist_data['software']['disk_opt']['checked'])) $optimizedUnits++;
+
             // If the equipment is currently faulty/maintenance, assume maintenance was limited or it's a critical failure found
             if ($task->equipment->status === 'faulty' || $task->equipment->status === 'maintenance') {
                 $failedToMaintain++;
-            } else {
-                if($hasCleaning) $cleanedUnits++;
-                if($hasOpt) $optimizedUnits++;
             }
         }
+        
+        $actionsList = !empty($actionsPerformed) ? implode(', ', array_keys($actionsPerformed)) : 'protocolos estándar';
 
         $summary = "Se presenta el informe técnico de infraestructura correspondiente al periodo actual. Se gestiona un parque tecnológico de {$totalEquipment} equipos en {$totalRooms} laboratorios. ";
-        $summary .= "Se ejecutaron protocolos de mantenimiento preventivo, abarcando limpieza interna profunda, gestión térmica y optimización de software en las unidades operativas. ";
+        $summary .= "Durante las intervenciones se ejecutaron las siguientes acciones: {$actionsList}. ";
+        $summary .= "Se completó el mantenimiento preventivo en unidades operativas con énfasis en limpieza y optimización.";
         
         if ($failedToMaintain > 0) {
             $summary .= "Es importante destacar que en {$failedToMaintain} equipos con FALLA CRÍTICA (sin encendido/daño físico), el protocolo preventivo estándar no pudo aplicarse en su totalidad debido a su condición inoperativa, siendo priorizados para reparación. ";
@@ -192,6 +208,7 @@ class ReportController extends Controller
             'date', 
             'totalRooms',
             'totalEquipment',
+            'operationalEquipment',
             'faultyEquipmentCount',
             'pendingTasksCount',
             'healthIndex',

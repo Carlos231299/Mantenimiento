@@ -248,8 +248,15 @@
         </table>
     </div>
 
+    <!-- Evidence Section Separator -->
+    <div class="mt-8 mb-4 text-center">
+        <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+            — Anexos de Evidencia del Mantenimiento a continuación —
+        </p>
+    </div>
+
     <!-- SIGNATURES -->
-    <div class="mt-20 pt-16 border-t border-gray-100 flex justify-around">
+    <div class="mt-8 pt-16 border-t border-gray-100 flex justify-around">
         <div class="w-72 text-center border-t border-slate-900 pt-3">
             <p class="text-[9px] font-black tracking-widest text-slate-900 uppercase">RESPONSABLE</p>
             <p class="text-[8px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">Firma de conformidad</p>

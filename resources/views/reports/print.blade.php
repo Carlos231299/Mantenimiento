@@ -128,7 +128,7 @@
     <div class="page-break">
         <h2 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
             <span class="w-1 h-3 bg-slate-900 rounded-px"></span>
-            Bitácora de Intervenciones Técnicas (Último Periodo)
+            Bitácora de Intervenciones Técnicas
         </h2>
         
         <table class="min-w-full border border-gray-200 rounded overflow-hidden shadow-sm">

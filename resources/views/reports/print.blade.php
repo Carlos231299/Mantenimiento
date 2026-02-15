@@ -198,32 +198,46 @@
                             }
                         @endphp
                         
-                        <div class="space-y-1 mb-2">
-                            @if(!empty($hwPerformed))
-                            <div class="flex flex-wrap gap-1">
-                                <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">HW:</span>
-                                @foreach($hwPerformed as $item)
-                                    <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
-                                @endforeach
-                            </div>
-                            @endif
-                            
-                            @if(!empty($swPerformed))
-                            <div class="flex flex-wrap gap-1">
-                                <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">SW:</span>
-                                @foreach($swPerformed as $item)
-                                    <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
-                                @endforeach
-                            </div>
-                            @endif
-                        </div>
+                        @php
+                            $isOperational = $task->equipment->status === 'operational';
+                            $hasFindings = !empty($findings);
+                        @endphp
 
-                        @if(!empty($findings))
-                            <span class="text-red-500 block text-[9px] leading-tight bg-red-50 p-1 rounded border border-red-100">
-                                <strong class="font-black uppercase tracking-tighter">Falla Crítica:</strong> {{ Str::limit(implode(', ', $findings), 120) }}
-                            </span>
+                        @if($isOperational)
+                            <div class="space-y-1 mb-2">
+                                @if(!empty($hwPerformed))
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">HW:</span>
+                                    @foreach($hwPerformed as $item)
+                                        <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
+                                    @endforeach
+                                </div>
+                                @endif
+                                
+                                @if(!empty($swPerformed))
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">SW:</span>
+                                    @foreach($swPerformed as $item)
+                                        <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
+                                    @endforeach
+                                </div>
+                                @endif
+                            </div>
+
+                            @if($hasFindings)
+                                <span class="text-amber-600 block text-[9px] leading-tight bg-amber-50 p-1 rounded border border-amber-100 mt-1">
+                                    <strong class="font-black uppercase tracking-tighter">Falla Encontrada (Corregida):</strong> {{ Str::limit(implode(', ', $findings), 120) }}
+                                </span>
+                            @else
+                                <span class="text-slate-400 italic text-[9px]">Mantenimiento preventivo sin incidencias.</span>
+                            @endif
+                        
                         @else
-                            <span class="text-slate-400 italic text-[9px]">Mantenimiento preventivo sin incidencias.</span>
+                            {{-- Faulty Status --}}
+                            <span class="text-red-600 block text-[9px] leading-tight bg-red-50 p-1 rounded border border-red-100">
+                                <strong class="font-black uppercase tracking-tighter">Falla Crítica:</strong> {{ $hasFindings ? Str::limit(implode(', ', $findings), 120) : 'Equipo inoperativo / Revisión pendiente' }}
+                            </span>
+                            <span class="text-[8px] text-red-400 italic mt-1 block">Protocolo preventivo suspendido.</span>
                         @endif
                     </td>
                 </tr>

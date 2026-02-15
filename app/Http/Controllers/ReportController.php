@@ -204,6 +204,11 @@ class ReportController extends Controller
             $summary .= "Permanecen programadas {$pendingTasksCount} intervenciones adicionales para garantizar la continuidad del servicio.";
         }
 
+        // Group tasks by Room Name
+        $completedTasksByRoom = $completedTasks->groupBy(function($task) {
+            return $task->equipment->room->name ?? 'Sin Asignar';
+        })->sortKeys();
+
         return view('reports.print', compact(
             'date', 
             'totalRooms',
@@ -215,6 +220,7 @@ class ReportController extends Controller
             'priorityStats',
             'roomHealthRanking',
             'completedTasks',
+            'completedTasksByRoom',
             'summary',
             'recommendations',
             'faultyEquipment'

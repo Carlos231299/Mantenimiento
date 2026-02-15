@@ -125,127 +125,70 @@
     @endif
 
     <!-- LOG TABLE -->
+    <!-- LOG TABLE BY ROOM -->
     <div class="page-break">
-        <h2 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <h2 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
             <span class="w-1 h-3 bg-slate-900 rounded-px"></span>
             Bitácora de Intervenciones Técnicas
         </h2>
         
-        <table class="min-w-full border border-gray-200 rounded overflow-hidden shadow-sm">
-            <thead class="bg-slate-900">
-                <tr>
-                    <th class="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-wider">Fecha</th>
-                    <th class="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-wider">Equipo / Ubicación</th>
-                    <th class="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-wider">Técnico</th>
-                    <th class="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-wider">Estado</th>
-                    <th class="px-4 py-3 text-left text-[9px] font-black text-white uppercase tracking-wider">Resultados del Mantenimiento</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-                @forelse($completedTasks as $task)
-                <tr class="hover:bg-gray-50/50 transition-colors">
-                    <td class="px-4 py-3 text-[11px] font-bold text-slate-600 whitespace-nowrap">{{ $task->completed_at->format('d/m/Y') }}</td>
-                    <td class="px-4 py-3">
-                        <span class="text-[11px] font-black text-slate-900 block">{{ $task->equipment->inventory_code }}</span>
-                        <span class="text-[9px] text-slate-400 font-bold uppercase">{{ $task->equipment->room->name ?? '-' }}</span>
-                    </td>
-                    <td class="px-4 py-3 text-[11px] font-medium text-slate-700">{{ $task->technician->name ?? 'Sistema' }}</td>
-                    <td class="px-4 py-3">
-                        @php $isOp = $task->equipment->status == 'operational'; @endphp
-                        <span class="px-2 py-0.5 rounded-sm text-[8px] font-black border uppercase {{ $isOp ? 'bg-green-50 text-green-700 border-green-200 shadow-sm shadow-green-50' : 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-50' }}">
-                            {{ $isOp ? 'OPERATIVO' : 'CON FALLA' }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-[10px] text-slate-600 leading-tight">
-                        @php
-                            $findings = $task->checklist_data['hardware']['findings'] ?? [];
-                            if(empty($findings)) $findings = $task->checklist_data['maintenance_findings'] ?? [];
-                            
-                            // Helper for checklist labels
-                            $hwMap = [
-                                'cleaning' => 'Limpieza Int.', 'thermal_paste' => 'Pasta Térmica', 'cooler' => 'Coolers',
-                                'peripherals' => 'Periféricos', 'cables' => 'Gestión Cables', 'screen' => 'Limpieza Pantalla'
-                            ];
-                            $swMap = [
-                                'antivirus' => 'Antivirus', 'tmp_files' => 'Archivos Temp.', 'disk_opt' => 'Opt. Disco',
-                                'drivers' => 'Drivers', 'unauthorized_sw' => 'SW No Autorizado', 'windows_update' => 'Win. Update'
-                            ];
-
-                            $hwPerformed = [];
-                            foreach($hwMap as $key => $label) {
-                                // Only include if strictly CHECKED (ignore N/A)
-                                if(isset($task->checklist_data['hardware'][$key]['checked'])) {
-                                    $hwPerformed[] = $label;
-                                }
-                            }
-                            if(isset($task->checklist_data['hardware']['custom'])) {
-                                foreach($task->checklist_data['hardware']['custom'] as $c) {
-                                    if(is_array($c) && isset($c['checked'])) $hwPerformed[] = $c['name'];
-                                }
-                            }
-
-                            $swPerformed = [];
-                            foreach($swMap as $key => $label) {
-                                // Only include if strictly CHECKED
-                                if(isset($task->checklist_data['software'][$key]['checked'])) {
-                                    $swPerformed[] = $label;
-                                }
-                            }
-                            if(isset($task->checklist_data['software']['custom'])) {
-                                foreach($task->checklist_data['software']['custom'] as $c) {
-                                     if(is_array($c) && isset($c['checked'])) $swPerformed[] = $c['name'];
-                                }
-                            }
-                        @endphp
-                        
-                        @php
-                            $isOperational = $task->equipment->status === 'operational';
-                            $hasFindings = !empty($findings);
-                        @endphp
-
-                        @if($isOperational)
-                            <div class="space-y-1 mb-2">
-                                @if(!empty($hwPerformed))
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">HW:</span>
-                                    @foreach($hwPerformed as $item)
-                                        <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
-                                    @endforeach
-                                </div>
-                                @endif
+        <div class="grid grid-cols-2 gap-8 items-start">
+        @forelse($completedTasksByRoom as $roomName => $tasks)
+            <div class="break-inside-avoid">
+                <h3 class="text-[10px] font-black text-white bg-slate-800 px-3 py-1.5 rounded-t inline-block uppercase tracking-wider mb-0">
+                    {{ $roomName }}
+                </h3>
+                <table class="min-w-full border border-gray-200 rounded-b overflow-hidden shadow-sm">
+                    <thead class="bg-slate-100 border-b border-gray-200">
+                        <tr>
+                            <th class="px-2 py-1.5 text-left text-[7px] font-black text-slate-600 uppercase tracking-wider w-16">Fecha</th>
+                            <th class="px-2 py-1.5 text-left text-[7px] font-black text-slate-600 uppercase tracking-wider w-16">Equipo / Téc.</th>
+                            <th class="px-2 py-1.5 text-left text-[7px] font-black text-slate-600 uppercase tracking-wider">Estado / Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 bg-white">
+                        @foreach($tasks as $task)
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-2 py-1.5 text-[8px] font-bold text-slate-600 whitespace-nowrap align-top">{{ $task->completed_at->format('d/m') }}</td>
+                            <td class="px-2 py-1.5 align-top">
+                                <span class="text-[8px] font-black text-slate-900 block">{{ $task->equipment->inventory_code }}</span>
+                                <span class="text-[6px] text-slate-500 block uppercase tracking-tight mt-0.5">{{ Str::limit($task->technician->name ?? 'Sistema', 15) }}</span>
+                            </td>
+                            <td class="px-2 py-1.5 align-top">
+                                @php 
+                                    $isOp = $task->equipment->status == 'operational'; 
+                                    $findings = $task->checklist_data['hardware']['findings'] ?? [];
+                                    if(empty($findings)) $findings = $task->checklist_data['maintenance_findings'] ?? [];
+                                    $hasFindings = !empty($findings);
+                                @endphp
                                 
-                                @if(!empty($swPerformed))
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="text-[9px] font-black text-slate-700 uppercase tracking-tighter mr-1">SW:</span>
-                                    @foreach($swPerformed as $item)
-                                        <span class="text-[8px] px-1 rounded bg-slate-100 border border-slate-200 text-slate-600">{{ $item }}</span>
-                                    @endforeach
-                                </div>
-                                @endif
-                            </div>
-
-                            @if($hasFindings)
-                                <span class="text-amber-600 block text-[9px] leading-tight bg-amber-50 p-1 rounded border border-amber-100 mt-1">
-                                    <strong class="font-black uppercase tracking-tighter">Falla Encontrada (Corregida):</strong> {{ Str::limit(implode(', ', $findings), 120) }}
+                                <span class="px-1.5 py-0.5 rounded-sm text-[6px] font-black border uppercase mb-1 inline-block {{ $isOp ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200' }}">
+                                    {{ $isOp ? 'OK' : 'FALLA' }}
                                 </span>
-                            @else
-                                <span class="text-slate-400 italic text-[9px]">Mantenimiento preventivo sin incidencias.</span>
-                            @endif
-                        
-                        @else
-                            {{-- Faulty Status --}}
-                            <span class="text-red-600 block text-[9px] leading-tight bg-red-50 p-1 rounded border border-red-100">
-                                <strong class="font-black uppercase tracking-tighter">Falla Crítica:</strong> {{ $hasFindings ? Str::limit(implode(', ', $findings), 120) : 'Equipo inoperativo / Revisión pendiente' }}
-                            </span>
-                            <span class="text-[8px] text-red-400 italic mt-1 block">Protocolo preventivo suspendido.</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                 <tr><td colspan="5" class="px-4 py-10 text-center text-gray-400 italic font-medium">No se registran intervenciones en el periodo seleccionado.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+
+                                <div class="text-[7px] text-slate-600 leading-tight">
+                                    @if($isOp)
+                                        @if($hasFindings)
+                                            <span class="text-amber-600 font-bold block mt-0.5">Falla: {{ Str::limit(implode(', ', $findings), 60) }}</span>
+                                        @else
+                                            <span class="text-slate-400 italic">Mantenimiento preventivo.</span>
+                                        @endif
+                                    @else
+                                        <span class="text-red-600 font-bold block mt-0.5">{{ $hasFindings ? Str::limit(implode(', ', $findings), 60) : 'Revisión pendiente' }}</span>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @empty
+            <div class="col-span-2 p-8 text-center text-gray-400 italic border border-dashed border-gray-300 rounded">
+                No se registran intervenciones en el periodo seleccionado.
+            </div>
+        @endforelse
+        </div>
     </div>
 
     <!-- SIGNATURES -->
